@@ -41,7 +41,6 @@ env SPLUNK_HOST;
 ```
 
 ## Maintainers
-[jeremyjpj0916](https://github.com/jeremyjpj0916)  
-[rsbrisci](https://github.com/rsbrisci)  
+[ilovetypescript]
 
-Feel free to open issues, or refer to our [Contribution Guidelines](https://github.com/Optum/kong-splunk-log/blob/master/CONTRIBUTING.md) if you have any questions.
+Feel free to open issues
