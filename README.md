@@ -1,25 +1,12 @@
-# Kong Splunk Log
+# Kong Splunk Log Customized
 ## Overview
-Kong plugin designed to log API transactions to Splunk using the Splunk HTTP collector.
-
-Kong provides many great logging tools out of the box, this is a modified version of the Kong HTTP logging plugin that has been refactored and tailored to work with Splunk.
-
-Example Event Log Transaction:
-
-![Splunk Sample](https://github.com/Optum/kong-splunk-log/blob/master/SplunkLogSample.png)
-
+This is a forled and customized version of the excellent Kong Splunk Log by Optum.
 ## Supported Kong Releases
 Kong >= 2.4
 
 ## Installation
-Recommended:
-```
-$ luarocks install kong-splunk-log
-```
-Other:
-```
-$ git clone https://github.com/Optum/kong-splunk-log.git /path/to/kong/plugins/kong-splunk-log
-$ cd /path/to/kong/plugins/kong-splunk-log
+$ git clone https://github.com/ilovetypescript/kong-splunk-log-customized.git /path/to/kong/plugins/kong-splunk-log-customized
+$ cd /path/to/kong/plugins/kong-splunk-log-customized
 $ luarocks make *.rockspec
 ```
 
@@ -28,7 +15,7 @@ The plugin requires an environment variable `SPLUNK_HOST` . This is how we defin
 
 Example Plugin Configuration:
 
-![Splunk Config](https://github.com/Optum/kong-splunk-log/blob/master/SplunkConfig.png)
+![Splunk Config](https://github.com/ilovetypescript/kong-splunk-log/blob/master/SplunkConfig.png)
 
 If not already set, it can be done so as follows:
 ```

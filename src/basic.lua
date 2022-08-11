@@ -4,7 +4,24 @@ local EMPTY = tablex.readonly({})
 local splunkHost= os.getenv("SPLUNK_HOST")
 local gkong = kong
 
-function _M.serialize(ngx, kong)
+local function get_raw_body(req, maxLen)
+  req.read_body()
+  -- https://openresty-reference.readthedocs.io/en/latest/Lua_Nginx_API/#ngxreqget_body_data
+  local body = req.get_body_data()
+  if not body then
+    if req.get_body_file() then
+      return nil, "request body did not fit into client body buffer, consider raising 'client_body_buffer_size'"
+    else
+      return ""
+    end
+  end
+  if #body > maxLen then
+    body = string.sub(body, 1, maxLen)
+  end
+  return body
+end
+
+function _M.serialize(ngx, includebody, custom_sourcetype, custom_index, kong)
   local ctx = ngx.ctx
   local var = ngx.var
   local req = ngx.req
@@ -68,13 +85,22 @@ function _M.serialize(ngx, kong)
     end
   end
 
+  local body
+  if includebody == 1 then
+    body = get_raw_body(req, 2048)
+  else
+    body = "Not captured. To capture set splunk_includebody = 1 for the plugin in Kong."
+  end
+  
   return {
       host = splunkHost,
       source = var.hostname,
-      sourcetype = "AccessLog",
+      sourcetype = custom_sourcetype,
+      index = custom_index,
       time = req.start_time(), -- Contains the UTC timestamp of when the request has started to be processed. No rounding like StartedAt + lacks ctx.KONG_PROCESSING_START as possible return(look for discrepancies maybe sometime?).
       event = {   
-          CID = req.get_headers()["optum-cid-ext"],
+          Comments = "Kong-splunk-log-customized plugin",
+          CorrelationId = req.get_headers()["X-Correlation-ID"],
           FrontDoorRef = req.get_headers()["X-Azure-Ref"],
           HTTPMethod = kong.request.get_method(),
           RequestSize = var.request_length,
@@ -95,6 +121,7 @@ function _M.serialize(ngx, kong)
           GatewayPort = ((var.server_port == "8443" or var.server_port == "8000") and "443" or "8443"),
           ClientCertEnd = var.ssl_client_v_end,
           AppId = appId,
+          HTTPRequestBody = body,
       }
   }
 end

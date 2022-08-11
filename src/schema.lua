@@ -1,7 +1,7 @@
 local typedefs = require "kong.db.schema.typedefs"
 
 return {
-  name = "kong-splunk-log",
+  name = "kong-splunk-log-customized",
   fields = {
     { protocols = typedefs.protocols_http },
     { config = {
@@ -17,6 +17,9 @@ return {
           { retry_count = { type = "integer", default = 10 }, },
           { queue_size = { type = "integer", default = 1 }, },
           { flush_timeout = { type = "number", default = 2 }, },
+          { splunk_index = { type = "string", default = "afa-kong-prod" }, },
+          { splunk_sourcetype = { type = "string", default = "AccessLog" }, },
+          { includebody = { type = "integer", default = 0 }, },
     }, }, },
   },
 }

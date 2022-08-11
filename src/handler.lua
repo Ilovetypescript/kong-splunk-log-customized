@@ -1,4 +1,4 @@
-local basic_serializer = require "kong.plugins.kong-splunk-log.basic"
+local basic_serializer = require "kong.plugins.kong-splunk-log-customized.basic"
 local BatchQueue = require "kong.tools.batch_queue"
 local cjson = require "cjson"
 local url = require "socket.url"
@@ -6,7 +6,6 @@ local http = require "resty.http"
 
 
 local cjson_encode = cjson.encode
-local ngx_encode_base64 = ngx.encode_base64
 local table_concat = table.concat
 local fmt = string.format
 
@@ -15,7 +14,7 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 12
-KongSplunkLog.VERSION = "3.6.0"
+KongSplunkLog.VERSION = "0.1.1"
 
 
 local queues = {} -- one queue per unique plugin config
@@ -128,7 +127,7 @@ end
 
 
 local function get_queue_id(conf)
-  return fmt("%s:%s:%s:%s:%s:%s",
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
              conf.splunk_endpoint,
              conf.method,
              conf.content_type,
@@ -136,12 +135,14 @@ local function get_queue_id(conf)
              conf.keepalive,
              conf.retry_count,
              conf.queue_size,
-             conf.flush_timeout)
+             conf.flush_timeout,
+             conf.splunk_index,
+             conf.splunk_sourcetype,
+             conf.includebody)
 end
 
-
 function KongSplunkLog:log(conf)
-  local entry = cjson_encode(basic_serializer.serialize(ngx))
+  local entry = cjson_encode(basic_serializer.serialize(ngx, conf.includebody, conf.splunk_sourcetype, conf.splunk_index))
 
   local queue_id = get_queue_id(conf)
   local q = queues[queue_id]
