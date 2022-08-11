@@ -13,7 +13,7 @@ local fmt = string.format
 local KongSplunkLog = {}
 
 
-KongSplunkLog.PRIORITY = 12
+KongSplunkLog.PRIORITY = 14
 KongSplunkLog.VERSION = "0.1.1"
 
 
@@ -50,7 +50,6 @@ local function parse_url(host_url)
   return parsed_url
 end
 
-
 -- Sends the provided payload (a string) to the configured plugin host
 -- @return true if everything was sent correctly, falsy if error
 -- @return error message if there was an error
@@ -78,7 +77,7 @@ local function send_payload(self, conf, payload)
     local _, err = httpc:ssl_handshake(true, host, false)
     if err then
       return nil, "failed to do SSL handshake with " ..
-                  host .. ":" .. tostring(port) .. ": " .. err
+          host .. ":" .. tostring(port) .. ": " .. err
     end
   end
 
@@ -105,8 +104,8 @@ local function send_payload(self, conf, payload)
 
   if not success then
     err_msg = "request to " .. host .. ":" .. tostring(port) ..
-              " returned status code " .. tostring(res.status) .. " and body " ..
-              response_body
+        " returned status code " .. tostring(res.status) .. " and body " ..
+        response_body
   end
 
   ok, err = httpc:set_keepalive(keepalive)
@@ -119,30 +118,43 @@ local function send_payload(self, conf, payload)
   return success, err_msg
 end
 
-
 local function json_array_concat(entries)
   --return "[" .. table_concat(entries, ",") .. "]" If splunk followed true json format we would use this
-    return "" .. table_concat(entries, "\n\n") .. "" -- Break events up by newlining them
+  return "" .. table_concat(entries, "\n\n") .. "" -- Break events up by newlining them
 end
-
 
 local function get_queue_id(conf)
   return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
-             conf.splunk_endpoint,
-             conf.method,
-             conf.content_type,
-             conf.timeout,
-             conf.keepalive,
-             conf.retry_count,
-             conf.queue_size,
-             conf.flush_timeout,
-             conf.splunk_index,
-             conf.splunk_sourcetype,
-             conf.includebody)
+    conf.splunk_endpoint,
+    conf.method,
+    conf.content_type,
+    conf.timeout,
+    conf.keepalive,
+    conf.retry_count,
+    conf.queue_size,
+    conf.flush_timeout,
+    conf.splunk_index,
+    conf.splunk_sourcetype,
+    conf.includebody)
+end
+
+function KongSplunkLog:access(conf)
+  local body
+  if conf.includebody == 1 then
+    body, error = kong.request.get_raw_body()
+    if not body then
+      body = error
+    else
+      body = string.sub(body, 1, 2048)
+    end
+  else
+    body = "Not captured. To capture set includebody = 1 for the plugin in Kong."
+  end
+  kong.ctx.plugin.request_body = body
 end
 
 function KongSplunkLog:log(conf)
-  local entry = cjson_encode(basic_serializer.serialize(ngx, conf.includebody, conf.splunk_sourcetype, conf.splunk_index))
+  local entry = cjson_encode(basic_serializer.serialize(ngx, conf.splunk_sourcetype, conf.splunk_index, kong.ctx.plugin.request_body))
 
   local queue_id = get_queue_id(conf)
   local q = queues[queue_id]
@@ -151,9 +163,9 @@ function KongSplunkLog:log(conf)
     local batch_max_size = conf.queue_size or 1
     local process = function(entries)
       local payload = batch_max_size == 1
-                      and entries[1]
-                      or  json_array_concat(entries)
-  
+          and entries[1]
+          or json_array_concat(entries)
+
       return send_payload(self, conf, payload)
     end
 

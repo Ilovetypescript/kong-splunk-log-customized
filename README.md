@@ -1,10 +1,11 @@
 # Kong Splunk Log Customized
 ## Overview
-This is a forled and customized version of the excellent Kong Splunk Log by Optum.
+This is a forked and customized version of the excellent Kong Splunk Log by Optum. I recommend that you use the original.
 ## Supported Kong Releases
 Kong >= 2.4
 
 ## Installation
+```
 $ git clone https://github.com/ilovetypescript/kong-splunk-log-customized.git /path/to/kong/plugins/kong-splunk-log-customized
 $ cd /path/to/kong/plugins/kong-splunk-log-customized
 $ luarocks make *.rockspec
@@ -28,6 +29,5 @@ env SPLUNK_HOST;
 ```
 
 ## Maintainers
-[ilovetypescript]
+[ilovetypescript](https://github.com/Ilovetypescript)
 
-Feel free to open issues
