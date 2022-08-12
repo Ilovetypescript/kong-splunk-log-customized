@@ -9,6 +9,8 @@ Kong >= 2.4
 $ git clone https://github.com/ilovetypescript/kong-splunk-log-customized.git /path/to/kong/plugins/kong-splunk-log-customized
 $ cd /path/to/kong/plugins/kong-splunk-log-customized
 $ luarocks make *.rockspec
+
+And then look at 
 ```
 
 ## Configuration
@@ -16,7 +18,7 @@ The plugin requires an environment variable `SPLUNK_HOST` . This is how we defin
 
 Example Plugin Configuration:
 
-![Splunk Config](https://github.com/ilovetypescript/kong-splunk-log/blob/master/SplunkConfig.png)
+![Splunk Config](https://github.com/ilovetypescript/kong-splunk-log-customized/blob/master/SplunkConfig.png)
 
 If not already set, it can be done so as follows:
 ```
