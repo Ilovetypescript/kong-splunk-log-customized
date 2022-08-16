@@ -1,3 +1,4 @@
+-- This file has been modified by "ilovetypescript" from the original provided by Optum.
 local basic_serializer = require "kong.plugins.kong-splunk-log-customized.basic"
 local BatchQueue = require "kong.tools.batch_queue"
 local cjson = require "cjson"
@@ -14,7 +15,7 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "0.2.0"
+KongSplunkLog.VERSION = "0.2.1"
 
 
 local queues = {} -- one queue per unique plugin config

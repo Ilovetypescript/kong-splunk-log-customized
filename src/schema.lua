@@ -1,3 +1,4 @@
+-- This file has been modified by "ilovetypescript" from the original provided by Optum.
 local typedefs = require "kong.db.schema.typedefs"
 
 return {
@@ -16,8 +17,8 @@ return {
           { keepalive = { type = "number", default = 60000 }, },
           { retry_count = { type = "integer", default = 10 }, },
           { queue_size = { type = "integer", default = 1 }, },
-          { flush_timeout = { type = "number", default = 2 }, },
-          { splunk_index = { type = "string", default = "afa-kong-prod" }, },
+          { flush_timeout = { type = "number", default = 20 }, },
+          { splunk_index = { type = "string", default = "" }, },
           { splunk_sourcetype = { type = "string", default = "AccessLog" }, },
           { includebody = { type = "integer", default = 0 }, },
     }, }, },

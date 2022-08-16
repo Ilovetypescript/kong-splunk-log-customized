@@ -1,3 +1,5 @@
+This file has been modified from the original provided by Optum.
+
 Kong Plunk Log
 Copyright 2018 Optum
 
@@ -22,3 +24,7 @@ Added Files:
 
 Modified Files:
 ===============
+basic.lua by ilovetypescript
+handler.lua by ilovetypescript
+schema.lua by ilovetypescript
+readme.md by ilovetypescript
