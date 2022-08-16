@@ -1,6 +1,6 @@
 # Kong Splunk Log Customized
 ## Overview
-This is a forked and customized version of the excellent Kong Splunk Log by Optum. I recommend that you use the original.
+This is a forked and customized version of the excellent Kong Splunk Log (C) Optum. I recommend that you use the original.
 ## Supported Kong Releases
 Kong >= 2.4
 
