@@ -10,7 +10,7 @@ $ git clone https://github.com/ilovetypescript/kong-splunk-log-customized.git /p
 $ cd /path/to/kong/plugins/kong-splunk-log-customized
 $ luarocks make *.rockspec
 
-And then look at 
+For more information see https://docs.konghq.com/gateway/latest/plugin-development/distribution/
 ```
 
 ## Configuration
