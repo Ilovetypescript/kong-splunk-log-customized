@@ -21,6 +21,11 @@ Example Plugin Configuration:
 
 ![Splunk Config](https://github.com/ilovetypescript/kong-splunk-log-customized/blob/master/SplunkConfig.png)
 
+And in  addition to these parameters you can set 
+splunk_index = { type = "string", default = "" }
+splunk_sourcetype = { type = "string", default = "AccessLog" }
+includebody = { type = "integer", default = 0 }
+          
 If not already set, it can be done so as follows:
 ```
 $ export SPLUNK_HOST="gateway.company.com"
