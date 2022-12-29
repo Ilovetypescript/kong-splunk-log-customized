@@ -21,6 +21,9 @@ return {
           { splunk_index = { type = "string", default = "" }, },
           { splunk_sourcetype = { type = "string", default = "AccessLog" }, },
           { includebody = { type = "integer", default = 0 }, },
+          { includeresponse = { type = "integer", default = 0 }, },
+          { includejwt = { type = "integer", default = 0 }, },
+          { includeheaders = { type = "integer", default = 0 }, },
     }, }, },
   },
 }

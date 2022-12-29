@@ -1,6 +1,8 @@
 -- This file has been modified by "ilovetypescript" from the original provided by Optum.
 local basic_serializer = require "kong.plugins.kong-splunk-log-customized.basic"
 local BatchQueue = require "kong.tools.batch_queue"
+local luajwt = require "kong.plugins.kong-splunk-log-customized.luajwt"
+
 local cjson = require "cjson"
 local url = require "socket.url"
 local http = require "resty.http"
@@ -15,13 +17,27 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "0.2.1"
+KongSplunkLog.VERSION = "0.2.2"
 
 
 local queues = {} -- one queue per unique plugin config
 
 local parsed_urls_cache = {}
 
+
+local function t2s(o)
+  if type(o) == 'table' then
+          local s = '{ '
+          for k,v in pairs(o) do
+                  if type(k) ~= 'number' then k = '"'..k..'"' end
+                  s = s .. '['..k..'] = ' .. t2s(v) .. ','
+          end
+
+          return s .. '} '
+  else
+          return tostring(o)
+  end
+end
 
 -- Parse host url.
 -- @param `url` host url
@@ -125,7 +141,7 @@ local function json_array_concat(entries)
 end
 
 local function get_queue_id(conf)
-  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
     conf.splunk_endpoint,
     conf.method,
     conf.content_type,
@@ -136,11 +152,18 @@ local function get_queue_id(conf)
     conf.flush_timeout,
     conf.splunk_index,
     conf.splunk_sourcetype,
-    conf.includebody)
+    conf.includebody,
+    conf.includeresponse,
+    conf.includejwt,
+    conf.includeheaders)
 end
 
 function KongSplunkLog:access(conf)
   local body
+  local jwt
+  local decodedJwt
+  local err
+  local headers
   if conf.includebody == 1 then
     body, error = kong.request.get_raw_body()
     if not body then
@@ -149,13 +172,64 @@ function KongSplunkLog:access(conf)
       body = string.sub(body, 1, 2048)
     end
   else
-    body = "Not captured. To capture set includebody = 1 for the plugin in Kong."
+    body = "To capture set includebody = 1"
   end
   kong.ctx.plugin.request_body = body
+
+  if conf.includejwt == 1 then
+    jwt = kong.request.get_header("Authorization")
+    if not jwt then
+      jwt = kong.request.get_query_arg("access_token")
+    end
+
+    if not jwt then
+      jwt = "No access token in Authorization header or access_token query string parameter"
+     else
+      jwt = string.gsub(jwt, "Bearer ", "")
+      decodedJwt, err = luajwt.decode(jwt, "", false)
+      if not err then
+        kong.ctx.plugin.jwt_azp = decodedJwt.jwt_azp
+        kong.ctx.plugin.jwt_oid = decodedJwt.jwt_oid
+      else
+        kong.ctx.plugin.jwt_azp = err
+        kong.ctx.plugin.jwt_oid = err
+      end
+    end
+  else
+    jwt = "To capture set includejwt = 1"
+  end
+  kong.ctx.plugin.request_jwt = jwt
+
+  if conf.includeheaders == 1 then
+    headers = kong.request.get_headers()
+    if not headers then
+      kong.ctx.plugin.request_headers = ""
+    else
+      kong.ctx.plugin.request_headers = t2s(headers)
+    end 
+  else
+    kong.ctx.plugin.request_headers = "To capture set includeheaders = 1"
+  end
+  
+end
+
+function KongSplunkLog:body_filter(conf)
+  local body
+  if conf.includeresponse == 1 then
+    body, error = kong.response.get_raw_body()
+    if not body then
+      body = error
+    else
+      body = string.sub(body, 1, 2048)
+    end
+  else
+    body = "To capture set includeresponse = 1"
+  end
+  kong.ctx.plugin.response_body = body
 end
 
 function KongSplunkLog:log(conf)
-  local entry = cjson_encode(basic_serializer.serialize(ngx, conf.splunk_sourcetype, conf.splunk_index, kong.ctx.plugin.request_body))
+  local entry = cjson_encode(basic_serializer.serialize(ngx, conf.splunk_sourcetype, conf.splunk_index))
 
   local queue_id = get_queue_id(conf)
   local q = queues[queue_id]

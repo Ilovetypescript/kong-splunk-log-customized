@@ -5,7 +5,7 @@ local EMPTY = tablex.readonly({})
 local splunkHost= os.getenv("SPLUNK_HOST")
 local gkong = kong
 
-function _M.serialize(ngx, custom_sourcetype, custom_index, body, kong)
+function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
   local ctx = ngx.ctx
   local var = ngx.var
   local req = ngx.req
@@ -76,7 +76,7 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, body, kong)
       index = custom_index,
       time = req.start_time(), -- Contains the UTC timestamp of when the request has started to be processed. No rounding like StartedAt + lacks ctx.KONG_PROCESSING_START as possible return(look for discrepancies maybe sometime?).
       event = {   
-          Comments = "By Kong-splunk-log-customized plugin",
+          Comments = "Kong-splunk-log-customized plugin",
           CorrelationId = req.get_headers()["X-Correlation-ID"],
           FrontDoorRef = req.get_headers()["X-Azure-Ref"],
           HTTPMethod = kong.request.get_method(),
@@ -98,7 +98,12 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, body, kong)
           GatewayPort = ((var.server_port == "8443" or var.server_port == "8000") and "443" or "8443"),
           ClientCertEnd = var.ssl_client_v_end,
           AppId = appId,
-          HTTPRequestBody = body,
+          HTTPRequestBody = kong.ctx.plugin.request_body,
+          HTTPResponseBody = kong.ctx.plugin.response_body,
+          JwtAzp = kong.ctx.plugin.jwt_azp,
+          JwtOid = kong.ctx.plugin.jwt_oid,
+          HTTPRequestJwt = kong.ctx.plugin.request_jwt,
+          HTTPRequestHeaders = kong.ctx.plugin.request_headers
       }
   }
 end
