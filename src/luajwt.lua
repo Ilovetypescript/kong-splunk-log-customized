@@ -25,7 +25,7 @@
 --SOFTWARE.
 
 local cjson  = require 'cjson'
-local base64 = require 'base64'
+local base64 = require "kong.plugins.kong-splunk-log-customized.base64"
 
 local function b64_encode(input)	
 	local result = base64.encode(input)

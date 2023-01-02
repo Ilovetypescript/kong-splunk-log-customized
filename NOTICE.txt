@@ -16,6 +16,7 @@ Jeremy Justus, ©Optum 2018
 Added Files:
 ============
 luajwt.lua (MIT licensed, see file for details)
+base64.lua (PD licensed, see file for details)
 
 Modified Files:
 ===============

@@ -19,6 +19,7 @@ build = {
       ["kong.plugins.kong-splunk-log-customized.basic"] = "src/basic.lua",
       ["kong.plugins.kong-splunk-log-customized.handler"]  = "src/handler.lua",
       ["kong.plugins.kong-splunk-log-customized.schema"]= "src/schema.lua",
-      ["kong.plugins.kong-splunk-log-customized.luajwt"]= "src/luajwt.lua"
+      ["kong.plugins.kong-splunk-log-customized.luajwt"]= "src/luajwt.lua",
+      ["kong.plugins.kong-splunk-log-customized.base64"]= "src/base64.lua"
    }
 }
