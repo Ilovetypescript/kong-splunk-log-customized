@@ -1,5 +1,5 @@
 package = "kong-splunk-log-customized"
-version = "0.2.2-1"
+version = "0.2.3-1"
 source = {
    url = "git+https://github.com/ilovetypescript/kong-splunk-log-customized.git"
 }

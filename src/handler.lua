@@ -17,7 +17,7 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "0.2.2"
+KongSplunkLog.VERSION = "0.2.3"
 
 
 local queues = {} -- one queue per unique plugin config
