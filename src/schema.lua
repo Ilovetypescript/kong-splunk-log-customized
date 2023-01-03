@@ -18,7 +18,7 @@ return {
           { retry_count = { type = "integer", default = 10 }, },
           { queue_size = { type = "integer", default = 1 }, },
           { flush_timeout = { type = "number", default = 20 }, },
-          { splunk_index = { type = "string", default = "" }, },
+          { splunk_index = { type = "string", default = "main" }, },
           { splunk_sourcetype = { type = "string", default = "AccessLog" }, },
           { includebody = { type = "integer", default = 0 }, },
           { includeresponse = { type = "integer", default = 0 }, },

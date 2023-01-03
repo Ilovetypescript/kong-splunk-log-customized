@@ -102,6 +102,7 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
           HTTPResponseBody = kong.ctx.plugin.response_body,
           JwtAzp = kong.ctx.plugin.jwt_azp,
           JwtOid = kong.ctx.plugin.jwt_oid,
+          JwtSub = kong.ctx.plugin.jwt_sub,
           HTTPRequestJwt = kong.ctx.plugin.request_jwt,
           HTTPRequestHeaders = kong.ctx.plugin.request_headers
       }

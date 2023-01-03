@@ -183,16 +183,18 @@ function KongSplunkLog:access(conf)
     end
 
     if not jwt then
-      jwt = "No access token in Authorization header or access_token query string parameter"
+      jwt = "No access token in Authorization header or access_token querystring parameter"
      else
       jwt = string.gsub(jwt, "Bearer ", "")
       decodedJwt, err = luajwt.decode(jwt, "", false)
       if not err then
-        kong.ctx.plugin.jwt_azp = decodedJwt.jwt_azp
-        kong.ctx.plugin.jwt_oid = decodedJwt.jwt_oid
+        kong.ctx.plugin.jwt_azp = decodedJwt.azp
+        kong.ctx.plugin.jwt_oid = decodedJwt.oid
+        kong.ctx.plugin.jwt_sub = decodedJwt.sub
       else
         kong.ctx.plugin.jwt_azp = err
         kong.ctx.plugin.jwt_oid = err
+        kong.ctx.plugin.jwt_sub = err
       end
     end
   else
