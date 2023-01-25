@@ -17,7 +17,7 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "0.2.3"
+KongSplunkLog.VERSION = "0.3.0"
 
 
 local queues = {} -- one queue per unique plugin config
@@ -141,7 +141,7 @@ local function json_array_concat(entries)
 end
 
 local function get_queue_id(conf)
-  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%splunk_token",
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
     conf.splunk_endpoint,
     conf.method,
     conf.content_type,
