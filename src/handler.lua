@@ -27,15 +27,15 @@ local parsed_urls_cache = {}
 
 local function t2s(o)
   if type(o) == 'table' then
-          local s = '{ '
-          for k,v in pairs(o) do
-                  if type(k) ~= 'number' then k = '"'..k..'"' end
-                  s = s .. '['..k..'] = ' .. t2s(v) .. ','
-          end
+    local s = '{ '
+    for k, v in pairs(o) do
+      if type(k) ~= 'number' then k = '"' .. k .. '"' end
+      s = s .. '[' .. k .. '] = ' .. t2s(v) .. ','
+    end
 
-          return s .. '} '
+    return s .. '} '
   else
-          return tostring(o)
+    return tostring(o)
   end
 end
 
@@ -141,7 +141,7 @@ local function json_array_concat(entries)
 end
 
 local function get_queue_id(conf)
-  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%splunk_token",
     conf.splunk_endpoint,
     conf.method,
     conf.content_type,
@@ -155,7 +155,8 @@ local function get_queue_id(conf)
     conf.includebody,
     conf.includeresponse,
     conf.includejwt,
-    conf.includeheaders)
+    conf.includeheaders,
+    conf.includeBearerTokenHeader)
 end
 
 function KongSplunkLog:access(conf)
@@ -176,7 +177,7 @@ function KongSplunkLog:access(conf)
   end
   kong.ctx.plugin.request_body = body
 
-  if conf.includejwt == 1 then
+  if conf.includejwt == 1 or conf.includeBearerTokenHeader == 1 then
     jwt = kong.request.get_header("Authorization")
     if not jwt then
       jwt = kong.request.get_query_arg("access_token")
@@ -184,21 +185,26 @@ function KongSplunkLog:access(conf)
 
     if not jwt then
       jwt = "No access token in Authorization header or access_token querystring parameter"
-     else
+    else
       jwt = string.gsub(jwt, "Bearer ", "")
-      decodedJwt, err = luajwt.decode(jwt, "", false)
-      if not err then
-        kong.ctx.plugin.jwt_azp = decodedJwt.azp
-        kong.ctx.plugin.jwt_oid = decodedJwt.oid
-        kong.ctx.plugin.jwt_sub = decodedJwt.sub
-      else
-        kong.ctx.plugin.jwt_azp = err
-        kong.ctx.plugin.jwt_oid = err
-        kong.ctx.plugin.jwt_sub = err
+      if conf.includejwt == 1 then
+        decodedJwt, err = luajwt.decode(jwt, "", false)
+        if not err then
+          kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
+          kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
+          kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
+        else
+          kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
+          kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
+          kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
+        end
+      end
+      if conf.includeBearerTokenHeader ~= 1 then
+        jwt = "To capture set includeBearerTokenHeader = 1"
       end
     end
   else
-    jwt = "To capture set includejwt = 1"
+    jwt = "Not captured"
   end
   kong.ctx.plugin.request_jwt = jwt
 
@@ -208,11 +214,11 @@ function KongSplunkLog:access(conf)
       kong.ctx.plugin.request_headers = ""
     else
       kong.ctx.plugin.request_headers = t2s(headers)
-    end 
+    end
   else
     kong.ctx.plugin.request_headers = "To capture set includeheaders = 1"
   end
-  
+
 end
 
 function KongSplunkLog:body_filter(conf)
