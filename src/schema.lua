@@ -25,6 +25,7 @@ return {
         { includejwt = { type = "integer", default = 0 }, },
         { includeheaders = { type = "integer", default = 0 }, },
         { includeBearerTokenHeader = { type = "integer", default = 0 } },
+        { includejwtdecoded = { type = "integer", default = 0 } },
       },
     },
     },

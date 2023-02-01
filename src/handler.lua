@@ -17,7 +17,7 @@ local KongSplunkLog = {}
 
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "0.3.0"
+KongSplunkLog.VERSION = "0.3.1"
 
 
 local queues = {} -- one queue per unique plugin config
@@ -141,7 +141,7 @@ local function json_array_concat(entries)
 end
 
 local function get_queue_id(conf)
-  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
     conf.splunk_endpoint,
     conf.method,
     conf.content_type,
@@ -156,7 +156,8 @@ local function get_queue_id(conf)
     conf.includeresponse,
     conf.includejwt,
     conf.includeheaders,
-    conf.includeBearerTokenHeader)
+    conf.includeBearerTokenHeader,
+    conf.includejwtdecoded)
 end
 
 function KongSplunkLog:access(conf)
@@ -173,18 +174,19 @@ function KongSplunkLog:access(conf)
       body = string.sub(body, 1, 2048)
     end
   else
-    body = "To capture set includebody = 1"
+    body = "Set includebody = 1"
   end
   kong.ctx.plugin.request_body = body
 
   if conf.includejwt == 1 or conf.includeBearerTokenHeader == 1 then
     jwt = kong.request.get_header("Authorization")
-    if not jwt then
+    -- Check if the token is in the header otherwise check access_token querystring param
+    if not string.match(string.lower(jwt), "bearer") then
       jwt = kong.request.get_query_arg("access_token")
     end
 
     if not jwt then
-      jwt = "No access token in Authorization header or access_token querystring parameter"
+      jwt = "No access token in Authorization Bearer header or in access_token querystring parameter"
     else
       jwt = string.gsub(jwt, "Bearer ", "")
       if conf.includejwt == 1 then
@@ -193,14 +195,17 @@ function KongSplunkLog:access(conf)
           kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
           kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
           kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
+          if conf.includejwtdecoded then
+            kong.ctx.plugin.jwt_decoded = t2s(decodedJwt)
+          end
         else
           kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
           kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
           kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
-        end
+        end     
       end
       if conf.includeBearerTokenHeader ~= 1 then
-        jwt = "To capture set includeBearerTokenHeader = 1"
+        jwt = "Set includeBearerTokenHeader = 1"
       end
     end
   else
@@ -216,7 +221,7 @@ function KongSplunkLog:access(conf)
       kong.ctx.plugin.request_headers = t2s(headers)
     end
   else
-    kong.ctx.plugin.request_headers = "To capture set includeheaders = 1"
+    kong.ctx.plugin.request_headers = "Set includeheaders = 1"
   end
 
 end
@@ -231,7 +236,7 @@ function KongSplunkLog:body_filter(conf)
       body = string.sub(body, 1, 2048)
     end
   else
-    body = "To capture set includeresponse = 1"
+    body = "Set includeresponse = 1"
   end
   kong.ctx.plugin.response_body = body
 end
