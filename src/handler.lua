@@ -195,7 +195,7 @@ function KongSplunkLog:access(conf)
           kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
           kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
           kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
-          if conf.includejwtdecoded then
+          if conf.includejwtdecoded == 1 then
             kong.ctx.plugin.jwt_decoded = t2s(decodedJwt)
           end
         else
