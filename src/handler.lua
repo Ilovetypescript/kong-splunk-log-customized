@@ -99,17 +99,17 @@ local function send_payload(self, conf, payload)
   end
 
   local res, err = httpc:request({
-    method = method,
-    path = parsed_url.path,
-    query = parsed_url.query,
-    headers = {
-      ["Host"] = parsed_url.host,
-      ["Content-Type"] = content_type,
-      ["Content-Length"] = #payload,
-      ["Authorization"] = "Splunk " .. splunk_token,
-    },
-    body = payload,
-  })
+          method = method,
+          path = parsed_url.path,
+          query = parsed_url.query,
+          headers = {
+              ["Host"] = parsed_url.host,
+              ["Content-Type"] = content_type,
+              ["Content-Length"] = #payload,
+              ["Authorization"] = "Splunk " .. splunk_token,
+          },
+          body = payload,
+      })
   if not res then
     return nil, "failed request to " .. host .. ":" .. tostring(port) .. ": " .. err
   end
@@ -142,22 +142,22 @@ end
 
 local function get_queue_id(conf)
   return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
-    conf.splunk_endpoint,
-    conf.method,
-    conf.content_type,
-    conf.timeout,
-    conf.keepalive,
-    conf.retry_count,
-    conf.queue_size,
-    conf.flush_timeout,
-    conf.splunk_index,
-    conf.splunk_sourcetype,
-    conf.includebody,
-    conf.includeresponse,
-    conf.includejwt,
-    conf.includeheaders,
-    conf.includeBearerTokenHeader,
-    conf.includejwtdecoded)
+          conf.splunk_endpoint,
+          conf.method,
+          conf.content_type,
+          conf.timeout,
+          conf.keepalive,
+          conf.retry_count,
+          conf.queue_size,
+          conf.flush_timeout,
+          conf.splunk_index,
+          conf.splunk_sourcetype,
+          conf.includebody,
+          conf.includeresponse,
+          conf.includejwt,
+          conf.includeheaders,
+          conf.includeBearerTokenHeader,
+          conf.includejwtdecoded)
 end
 
 function KongSplunkLog:access(conf)
@@ -181,8 +181,10 @@ function KongSplunkLog:access(conf)
   if conf.includejwt == 1 or conf.includeBearerTokenHeader == 1 then
     jwt = kong.request.get_header("Authorization")
     -- Check if the token is in the header otherwise check access_token querystring param
-    if not string.match(string.lower(jwt), "bearer") then
-      jwt = kong.request.get_query_arg("access_token")
+    if not (jwt == nil) then
+      if not string.match(string.lower(jwt), "bearer") then
+        jwt = kong.request.get_query_arg("access_token")
+      end
     end
 
     if not jwt then
@@ -202,7 +204,7 @@ function KongSplunkLog:access(conf)
           kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
           kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
           kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
-        end     
+        end
       end
       if conf.includeBearerTokenHeader ~= 1 then
         jwt = "Set includeBearerTokenHeader = 1"
@@ -223,7 +225,6 @@ function KongSplunkLog:access(conf)
   else
     kong.ctx.plugin.request_headers = "Set includeheaders = 1"
   end
-
 end
 
 function KongSplunkLog:body_filter(conf)
@@ -258,10 +259,10 @@ function KongSplunkLog:log(conf)
     end
 
     local opts = {
-      retry_count    = conf.retry_count,
-      flush_timeout  = conf.flush_timeout,
-      batch_max_size = batch_max_size,
-      process_delay  = 0,
+        retry_count    = conf.retry_count,
+        flush_timeout  = conf.flush_timeout,
+        batch_max_size = batch_max_size,
+        process_delay  = 0,
     }
 
     local err
