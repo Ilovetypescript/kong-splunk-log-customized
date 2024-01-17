@@ -4,6 +4,7 @@ local _M = {}
 local EMPTY = tablex.readonly({})
 local splunkHost = os.getenv("SPLUNK_HOST")
 local gkong = kong
+local VERSION = "3.9.1"
 
 function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
   local ctx = ngx.ctx
@@ -32,6 +33,11 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
 
   local RouteUrl = ""
   if ctx.balancer_data ~= nil then
+      if var.upstream_host ~= nil and var.upstream_host ~= '' then
+        RouteUrl = var.upstream_host
+      elseif ctx.balancer_data.host ~= nil then
+        RouteUrl = ctx.balancer_data.host
+      end
     if ctx.balancer_data.host ~= nil then
       RouteUrl = ctx.balancer_data.host
     end
@@ -76,8 +82,8 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
     index = custom_index,
     time = req.start_time(), -- Contains the UTC timestamp of when the request has started to be processed. No rounding like StartedAt + lacks ctx.KONG_PROCESSING_START as possible return(look for discrepancies maybe sometime?).
     event = {
-      Comments = "Kong-splunk-log-customized plugin",
-      CorrelationId = req.get_headers()["X-Correlation-ID"],
+      Comments = "Kong-splunk-log-customized plugin " .. kong.ctx.plugin.version,
+      CorrelationId = kong.request.get_header("X-Correlation-ID"),
       FrontDoorRef = req.get_headers()["X-Azure-Ref"],
       HTTPMethod = kong.request.get_method(),
       RequestSize = var.request_length,
@@ -90,6 +96,7 @@ function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
       BackendLatency = ctx.KONG_WAITING_TIME or -1, -- is the time it took for the final service to process the request
       TotalLatency = var.request_time * 1000, --  is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients
       KongLatency = (ctx.KONG_PROXY_LATENCY or ctx.KONG_RESPONSE_LATENCY or 0) + (ctx.KONG_RECEIVE_TIME or 0), -- is the internal Kong latency that it took to run all the plugins
+      DNSLatency = ctx.KONG_UPSTREAM_DNS_TIME,
       StartedAt = ctx.KONG_PROCESSING_START or (req.start_time() * 1000), -- Contains the UTC timestamp of when the request had started to be processed.
       Consumer = ConsumerUsername,
       ClientIP = var.remote_addr,
