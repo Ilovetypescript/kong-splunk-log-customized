@@ -3,7 +3,7 @@
 This is a forked and customized version of the excellent Kong Splunk Log (C) Optum. I recommend that you use the original.
 This version support logging of request body, setting splunk index and setting source type for Splunk. 
 ## Supported Kong Releases
-Kong >= 2.4
+Kong >= 3.x
 
 ## Installation
 ```
