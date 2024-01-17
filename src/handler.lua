@@ -16,8 +16,8 @@ local max = math.max
 
 local KongSplunkLog = {}
 
-KongSplunkLog.PRIORITY = 12
-KongSplunkLog.VERSION = "3.9.0"
+KongSplunkLog.PRIORITY = 14
+KongSplunkLog.VERSION = "3.9.1"
 
 -- Create a function that concatenates multiple JSON objects into a JSON array.
 -- This saves us from rendering all entries into one large JSON string.
@@ -230,24 +230,26 @@ function KongSplunkLog:access(conf)
     if not jwt then
       jwt = "No access token in Authorization Bearer header or in access_token querystring parameter"
     else
-      jwt = string.gsub(jwt, "Bearer ", "")
-      if conf.includejwt == 1 then
-        decodedJwt, err = luajwt.decode(jwt, "", false)
-        if not err then
-          kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
-          kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
-          kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
-          if conf.includejwtdecoded == 1 then
-            kong.ctx.plugin.jwt_decoded = t2s(decodedJwt)
+      if not (jwt == nil) then
+        jwt = string.gsub(jwt, "Bearer ", "")
+        if conf.includejwt == 1 then
+          decodedJwt, err = luajwt.decode(jwt, "", false)
+          if not err then
+            kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
+            kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
+            kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
+            if conf.includejwtdecoded == 1 then
+              kong.ctx.plugin.jwt_decoded = t2s(decodedJwt)
+            end
+          else
+            kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
+            kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
+            kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
           end
-        else
-          kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
-          kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
-          kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
         end
-      end
-      if conf.includeBearerTokenHeader ~= 1 then
-        jwt = "Set includeBearerTokenHeader = 1"
+        if conf.includeBearerTokenHeader ~= 1 then
+          jwt = "Set includeBearerTokenHeader = 1"
+        end
       end
     end
   else
