@@ -1,3 +1,5 @@
+This file has been modified from the original provided by Optum.
+
 Kong Plunk Log
 Copyright 2018 Optum
 
@@ -13,12 +15,12 @@ Jeremy Justus, ©Optum 2018
 
 Added Files:
 ============
-
-
-
-
-
-
+luajwt.lua (MIT licensed, see file for details)
+base64.lua (PD licensed, see file for details)
 
 Modified Files:
 ===============
+basic.lua by ilovetypescript
+handler.lua by ilovetypescript
+schema.lua by ilovetypescript
+readme.md by ilovetypescript

@@ -1,26 +1,17 @@
-# Kong Splunk Log
-## Overview
-Kong plugin designed to log API transactions to Splunk using the Splunk HTTP collector.
-
-Kong provides many great logging tools out of the box, this is a modified version of the Kong HTTP logging plugin that has been refactored and tailored to work with Splunk.
-
-Example Event Log Transaction:
-
-![Splunk Sample](https://github.com/Optum/kong-splunk-log/blob/master/SplunkLogSample.png)
-
+# Kong Splunk Log Customized
+## Over
+This is a forked and customized version of the excellent Kong Splunk Log (C) Optum. I recommend that you use the original.
+This version support logging of request body, setting splunk index and setting source type for Splunk. 
 ## Supported Kong Releases
 Kong >= 3.x
 
 ## Installation
-Recommended:
 ```
-$ luarocks install kong-splunk-log
-```
-Other:
-```
-$ git clone https://github.com/Optum/kong-splunk-log.git /path/to/kong/plugins/kong-splunk-log
-$ cd /path/to/kong/plugins/kong-splunk-log
+$ git clone https://github.com/ilovetypescript/kong-splunk-log-customized.git /path/to/kong/plugins/kong-splunk-log-customized
+$ cd /path/to/kong/plugins/kong-splunk-log-customized
 $ luarocks make *.rockspec
+
+For more information see https://docs.konghq.com/gateway/latest/plugin-development/distribution/
 ```
 
 ## Configuration
@@ -28,8 +19,17 @@ The plugin requires an environment variable `SPLUNK_HOST` . This is how we defin
 
 Example Plugin Configuration:
 
-![Splunk Config](https://github.com/Optum/kong-splunk-log/blob/master/SplunkConfig.png)
+![Splunk Config](https://github.com/ilovetypescript/kong-splunk-log-customized/blob/master/SplunkConfig.png)
 
+And in  addition to these parameters you can set ....
+splunk_index = { type = "string", default = "" }
+splunk_sourcetype = { type = "string", default = "AccessLog" }
+includebody = { type = "integer", default = 0 }
+includeresponse = { type = "integer", default = 0 }, },
+includejwt = { type = "integer", default = 0 }, },
+includeheaders = { type = "integer", default = 0 }, },
+includeBearerTokenHeader = { type = "integer", default = 0 } },
+          
 If not already set, it can be done so as follows:
 ```
 $ export SPLUNK_HOST="gateway.company.com"
@@ -41,7 +41,5 @@ env SPLUNK_HOST;
 ```
 
 ## Maintainers
-[jeremyjpj0916](https://github.com/jeremyjpj0916)  
-[rsbrisci](https://github.com/rsbrisci)  
+[ilovetypescript](https://github.com/Ilovetypescript)
 
-Feel free to open issues, or refer to our [Contribution Guidelines](https://github.com/Optum/kong-splunk-log/blob/master/CONTRIBUTING.md) if you have any questions.

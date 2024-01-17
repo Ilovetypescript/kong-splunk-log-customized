@@ -1,10 +1,12 @@
-local basic_serializer = require "kong.plugins.kong-splunk-log.basic"
+-- This file has been modified by "ilovetypescript" from the original provided by Optum.
+local basic_serializer = require "kong.plugins.kong-splunk-log-customized.basic"
 local Queue = require "kong.tools.queue"
+local luajwt = require "kong.plugins.kong-splunk-log-customized.luajwt"
+
 local cjson = require "cjson"
 local url = require "socket.url"
 local http = require "resty.http"
 local cjson_encode = cjson.encode
-local ngx_encode_base64 = ngx.encode_base64
 local table_concat = table.concat
 local tostring = tostring
 local tonumber = tonumber
@@ -53,6 +55,22 @@ end
 
 
 local parsed_urls_cache = {}
+
+
+local function t2s(o)
+  if type(o) == 'table' then
+    local s = '{ '
+    for k, v in pairs(o) do
+      if type(k) ~= 'number' then k = '"' .. k .. '"' end
+      s = s .. '[' .. k .. '] = ' .. t2s(v) .. ','
+    end
+
+    return s .. '} '
+  else
+    return tostring(o)
+  end
+end
+
 -- Parse host url.
 -- @param `url` host url
 -- @return `parsed_url` a table with host details:
@@ -82,7 +100,6 @@ local function parse_url(host_url)
   return parsed_url
 end
 
-
 -- Sends the provided payload (a string) to the configured plugin host
 -- @return true if everything was sent correctly, falsy if error
 -- @return error message if there was an error
@@ -110,7 +127,7 @@ local function send_payload(conf, entries)
     local _, err = httpc:ssl_handshake(true, host, false)
     if err then
       return nil, "failed to do SSL handshake with " ..
-                  host .. ":" .. tostring(port) .. ": " .. err
+          host .. ":" .. tostring(port) .. ": " .. err
     end
   end
   
@@ -139,8 +156,8 @@ local function send_payload(conf, entries)
 
   if not success then
     err_msg = "request to " .. host .. ":" .. tostring(port) ..
-              " returned status code " .. tostring(res.status) .. " and body " ..
-              response_body
+        " returned status code " .. tostring(res.status) .. " and body " ..
+        response_body
   end
 
   ok, err = httpc:set_keepalive(keepalive)
@@ -153,6 +170,10 @@ local function send_payload(conf, entries)
   return success, err_msg
 end
 
+local function json_array_concat(entries)
+  --return "[" .. table_concat(entries, ",") .. "]" If splunk followed true json format we would use this
+  return "" .. table_concat(entries, "\n\n") .. "" -- Break events up by newlining them
+end
 -- Create a queue name from the same legacy parameters that were used in the
 -- previous queue implementation.  This ensures that http-log instances that
 -- have the same log server parameters are sharing a queue.  It deliberately
@@ -160,21 +181,110 @@ end
 -- be nil in newer configurations.  Note that the modernized queue related
 -- parameters are not included in the queue name determination.
 local function make_queue_name(conf)
-  return fmt("%s:%s:%s:%s:%s:%s",
-    conf.splunk_endpoint,
-    conf.method,
-    conf.content_type,
-    conf.timeout,
-    conf.keepalive,
-    conf.retry_count,
-    conf.queue_size,
-    conf.flush_timeout)
+  return fmt("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+          conf.splunk_endpoint,
+          conf.method,
+          conf.content_type,
+          conf.timeout,
+          conf.keepalive,
+          conf.retry_count,
+          conf.queue_size,
+          conf.flush_timeout,
+          conf.splunk_index,
+          conf.splunk_sourcetype,
+          conf.includebody,
+          conf.includeresponse,
+          conf.includejwt,
+          conf.includeheaders,
+          conf.includeBearerTokenHeader,
+          conf.includejwtdecoded)
 end
 
+function KongSplunkLog:access(conf)
+  local body
+  local jwt
+  local decodedJwt
+  local err
+  local headers
+  if conf.includebody == 1 then
+    body, error = kong.request.get_raw_body()
+    if not body then
+      body = error
+    else
+      body = string.sub(body, 1, 2048)
+    end
+  else
+    body = "Set includebody = 1"
+  end
+  kong.ctx.plugin.request_body = body
+
+  if conf.includejwt == 1 or conf.includeBearerTokenHeader == 1 then
+    jwt = kong.request.get_header("Authorization")
+    -- Check if the token is in the header otherwise check access_token querystring param
+    if not (jwt == nil) then
+      if not string.match(string.lower(jwt), "bearer") then
+        jwt = kong.request.get_query_arg("access_token")
+      end
+    end
+
+    if not jwt then
+      jwt = "No access token in Authorization Bearer header or in access_token querystring parameter"
+    else
+      jwt = string.gsub(jwt, "Bearer ", "")
+      if conf.includejwt == 1 then
+        decodedJwt, err = luajwt.decode(jwt, "", false)
+        if not err then
+          kong.ctx.plugin.jwt_aud = decodedJwt.aud -- Intended audience for the token (clientId for the API)
+          kong.ctx.plugin.jwt_azp = decodedJwt.azp -- applicationId for the client in Azure AD
+          kong.ctx.plugin.jwt_oid = decodedJwt.oid -- Id of the requestor in Azure AD
+          if conf.includejwtdecoded == 1 then
+            kong.ctx.plugin.jwt_decoded = t2s(decodedJwt)
+          end
+        else
+          kong.ctx.plugin.jwt_aud = err -- Intended audience for the token (clientId for the API)
+          kong.ctx.plugin.jwt_azp = err -- applicationId for the client in Azure AD
+          kong.ctx.plugin.jwt_oid = err -- Id of the requestor in Azure AD
+        end
+      end
+      if conf.includeBearerTokenHeader ~= 1 then
+        jwt = "Set includeBearerTokenHeader = 1"
+      end
+    end
+  else
+    jwt = "Not captured"
+  end
+  kong.ctx.plugin.request_jwt = jwt
+
+  if conf.includeheaders == 1 then
+    headers = kong.request.get_headers()
+    if not headers then
+      kong.ctx.plugin.request_headers = ""
+    else
+      kong.ctx.plugin.request_headers = t2s(headers)
+    end
+  else
+    kong.ctx.plugin.request_headers = "Set includeheaders = 1"
+  end
+end
+
+function KongSplunkLog:body_filter(conf)
+  local body
+  if conf.includeresponse == 1 then
+    body, error = kong.response.get_raw_body()
+    if not body then
+      body = error
+    else
+      body = string.sub(body, 1, 2048)
+    end
+  else
+    body = "Set includeresponse = 1"
+  end
+  kong.ctx.plugin.response_body = body
+end
 
 function KongSplunkLog:log(conf)
 
-  local queue_conf = Queue.get_plugin_params("kong-splunk-log", conf, make_queue_name(conf))
+  local queue_conf = Queue.get_plugin_params("kong-splunk-log-customized", conf, make_queue_name(conf))
   kong.log.debug("Queue name automatically configured based on configuration parameters to: ", queue_conf.name)
 
   local ok, err = Queue.enqueue(
