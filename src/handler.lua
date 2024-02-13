@@ -17,7 +17,7 @@ local max = math.max
 local KongSplunkLog = {}
 
 KongSplunkLog.PRIORITY = 14
-KongSplunkLog.VERSION = "3.9.1"
+KongSplunkLog.VERSION = "3.9.2"
 
 -- Create a function that concatenates multiple JSON objects into a JSON array.
 -- This saves us from rendering all entries into one large JSON string.
@@ -285,7 +285,9 @@ function KongSplunkLog:body_filter(conf)
 end
 
 function KongSplunkLog:log(conf)
-
+  -- Store version in context
+  kong.ctx.plugin.version = KongSplunkLog.VERSION
+  -- end
   local queue_conf = Queue.get_plugin_params("kong-splunk-log-customized", conf, make_queue_name(conf))
   kong.log.debug("Queue name automatically configured based on configuration parameters to: ", queue_conf.name)
 

@@ -4,7 +4,7 @@ local _M = {}
 local EMPTY = tablex.readonly({})
 local splunkHost = os.getenv("SPLUNK_HOST")
 local gkong = kong
-local VERSION = "3.9.1"
+
 
 function _M.serialize(ngx, custom_sourcetype, custom_index, kong)
   local ctx = ngx.ctx
